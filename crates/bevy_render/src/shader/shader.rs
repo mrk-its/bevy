@@ -27,6 +27,7 @@ impl Into<naga::ShaderStage> for ShaderStage {
 }
 
 #[cfg(feature = "bevy-glsl-to-spirv")]
+#[cfg(all(not(target_os = "ios"), not(target_arch = "wasm32")))]
 impl Into<bevy_glsl_to_spirv::ShaderType> for ShaderStage {
     fn into(self) -> bevy_glsl_to_spirv::ShaderType {
         match self {
@@ -37,7 +38,7 @@ impl Into<bevy_glsl_to_spirv::ShaderType> for ShaderStage {
     }
 }
 
-#[cfg(not(target_os = "ios"))]
+#[cfg(all(not(target_os = "ios"), not(target_arch = "wasm32")))]
 fn glsl_to_spirv(
     glsl_source: &str,
     stage: ShaderStage,
@@ -79,6 +80,15 @@ fn glsl_to_spirv(
         output.read_to_end(&mut spv_bytes).unwrap();
         bytes_to_words(&spv_bytes)
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn glsl_to_spirv(
+    glsl_source: &str,
+    stage: ShaderStage,
+    shader_defs: Option<&[String]>,
+) -> Vec<u32> {
+    vec![]
 }
 
 #[cfg(target_os = "ios")]
@@ -131,10 +141,10 @@ fn bytes_to_words(bytes: &[u8]) -> Vec<u32> {
 }
 
 /// The full "source" of a shader
-#[derive(Clone, Debug, Hash, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ShaderSource {
     Spirv(Vec<u32>),
-    Glsl(String),
+    Glsl(String, Option<ShaderLayout>),
 }
 
 impl ShaderSource {
@@ -157,7 +167,14 @@ impl Shader {
 
     pub fn from_glsl(stage: ShaderStage, glsl: &str) -> Shader {
         Shader {
-            source: ShaderSource::Glsl(glsl.to_string()),
+            source: ShaderSource::Glsl(glsl.to_string(), None),
+            stage,
+        }
+    }
+
+    pub fn from_glsl_and_layout(stage: ShaderStage, glsl: &str, layout: ShaderLayout) -> Shader {
+        Shader {
+            source: ShaderSource::Glsl(glsl.to_string(), Some(layout)),
             stage,
         }
     }
@@ -165,25 +182,30 @@ impl Shader {
     pub fn get_spirv(&self, macros: Option<&[String]>) -> Vec<u32> {
         match self.source {
             ShaderSource::Spirv(ref bytes) => bytes.clone(),
-            ShaderSource::Glsl(ref source) => glsl_to_spirv(&source, self.stage, macros),
+            ShaderSource::Glsl(ref source, _) => glsl_to_spirv(&source, self.stage, macros),
         }
     }
 
     pub fn get_spirv_shader(&self, macros: Option<&[String]>) -> Shader {
         Shader {
+            #[cfg(not(target_arch = "wasm32"))]
             source: ShaderSource::Spirv(self.get_spirv(macros)),
+            #[cfg(target_arch = "wasm32")]
+            source: self.source.clone(),
             stage: self.stage,
         }
     }
 
     pub fn reflect_layout(&self, enforce_bevy_conventions: bool) -> Option<ShaderLayout> {
-        if let ShaderSource::Spirv(ref spirv) = self.source {
-            Some(ShaderLayout::from_spirv(
+        match &self.source {
+            ShaderSource::Spirv(ref spirv) => Some(ShaderLayout::from_spirv(
                 spirv.as_slice(),
                 enforce_bevy_conventions,
-            ))
-        } else {
-            panic!("Cannot reflect layout of non-SpirV shader. Try compiling this shader to SpirV first using self.get_spirv_shader()");
+            )),
+            ShaderSource::Glsl(source, layout) => {
+                // panic!("Cannot reflect layout of non-SpirV shader. Try compiling this shader to SpirV first using self.get_spirv_shader()");
+                layout.clone()
+            }
         }
     }
 }

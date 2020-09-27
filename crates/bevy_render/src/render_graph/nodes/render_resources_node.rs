@@ -189,7 +189,7 @@ where
                 let size = render_resource.buffer_byte_len().unwrap();
                 if let Some(buffer_array) = &mut self.buffer_arrays[i] {
                     buffer_array.get_or_assign_index(id);
-                    self.required_staging_buffer_size += size;
+                    self.required_staging_buffer_size += size.max(16);
                 }
             }
         }
@@ -249,8 +249,18 @@ where
                 Some(RenderResourceType::Buffer) => {
                     let size = render_resource.buffer_byte_len().unwrap();
                     let render_resource_name = uniforms.get_render_resource_name(i).unwrap();
+                    let mut min_size = size.max(16);
+                    if let Some(render_resource_hints) = uniforms.get_render_resource_hints(i) {
+                        // TODO - TextureAtlas_textures hack for sprite_sheet
+                        // get min_size from shader layout
+                        if render_resource_hints.contains(RenderResourceHints::BUFFER) {
+                            if render_resource_name == "TextureAtlas_textures" {
+                                min_size = 4096;
+                            }
+                        }
+                    }
                     let buffer_array = self.buffer_arrays[i].as_mut().unwrap();
-                    let range = 0..size as u64;
+                    let range = 0..min_size as u64;
                     let (target_buffer, target_offset) = if dynamic_uniforms {
                         let binding = buffer_array.get_binding(id).unwrap();
                         let dynamic_index = if let RenderResourceBinding::Buffer {
@@ -293,7 +303,7 @@ where
                             }
 
                             let buffer = render_resource_context.create_buffer(BufferInfo {
-                                size,
+                                size: min_size,
                                 buffer_usage: BufferUsage::COPY_DST | usage,
                                 ..Default::default()
                             });
@@ -323,7 +333,7 @@ where
                         source_offset: self.current_staging_buffer_offset,
                         size,
                     });
-                    self.current_staging_buffer_offset += size;
+                    self.current_staging_buffer_offset += min_size;
                 }
                 Some(RenderResourceType::Texture) => { /* ignore textures */ }
                 Some(RenderResourceType::Sampler) => { /* ignore samplers */ }
@@ -484,23 +494,6 @@ fn render_resources_node_system<T: RenderResources>(
         state
             .uniform_buffer_arrays
             .copy_staging_buffer_to_final_buffers(&mut state.command_queue, staging_buffer);
-    } else {
-        // TODO: can we just remove this?
-        let mut staging_buffer: [u8; 0] = [];
-        for (entity, uniforms, draw, mut render_pipelines) in &mut query.iter() {
-            if !draw.is_visible {
-                continue;
-            }
-
-            state.uniform_buffer_arrays.write_uniform_buffers(
-                entity,
-                &uniforms,
-                state.dynamic_uniforms,
-                render_resource_context,
-                &mut render_pipelines.bindings,
-                &mut staging_buffer,
-            );
-        }
     }
 }
 
@@ -624,22 +617,6 @@ fn asset_render_resources_node_system<T: RenderResources>(
         state
             .uniform_buffer_arrays
             .copy_staging_buffer_to_final_buffers(&mut state.command_queue, staging_buffer);
-    } else {
-        let mut staging_buffer: [u8; 0] = [];
-        for asset_handle in modified_assets.iter() {
-            let asset = assets.get(&asset_handle).expect(EXPECT_ASSET_MESSAGE);
-            let mut render_resource_bindings =
-                asset_render_resource_bindings.get_or_insert_mut(*asset_handle);
-            // TODO: only setup buffer if we haven't seen this handle before
-            state.uniform_buffer_arrays.write_uniform_buffers(
-                *asset_handle,
-                &asset,
-                state.dynamic_uniforms,
-                render_resource_context,
-                &mut render_resource_bindings,
-                &mut staging_buffer,
-            );
-        }
     }
 
     for (asset_handle, draw, mut render_pipelines) in &mut query.iter() {

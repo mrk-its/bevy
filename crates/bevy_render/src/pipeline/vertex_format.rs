@@ -65,35 +65,43 @@ pub enum VertexFormat {
 }
 
 impl VertexFormat {
-    pub fn get_size(&self) -> u64 {
-        match self {
-            VertexFormat::Uchar2
-            | VertexFormat::Char2
-            | VertexFormat::Uchar2Norm
-            | VertexFormat::Char2Norm => 2,
-            VertexFormat::Uchar4
-            | VertexFormat::Char4
-            | VertexFormat::Uchar4Norm
-            | VertexFormat::Char4Norm
-            | VertexFormat::Ushort2
-            | VertexFormat::Short2
-            | VertexFormat::Ushort2Norm
-            | VertexFormat::Short2Norm
-            | VertexFormat::Half2
-            | VertexFormat::Float
-            | VertexFormat::Uint
-            | VertexFormat::Int => 4,
-            VertexFormat::Ushort4
-            | VertexFormat::Short4
-            | VertexFormat::Ushort4Norm
-            | VertexFormat::Short4Norm
-            | VertexFormat::Half4
-            | VertexFormat::Float2
-            | VertexFormat::Uint2
-            | VertexFormat::Int2 => 8,
-            VertexFormat::Float3 | VertexFormat::Uint3 | VertexFormat::Int3 => 12,
-            VertexFormat::Float4 | VertexFormat::Uint4 | VertexFormat::Int4 => 16,
+    pub fn get_sizes(&self) -> (i32, i32) {
+        match *self {
+            VertexFormat::Uchar2 => (1, 2),
+            VertexFormat::Uchar4 => (1, 4),
+            VertexFormat::Char2 => (1, 2),
+            VertexFormat::Char4 => (1, 4),
+            VertexFormat::Uchar2Norm => (1, 2),
+            VertexFormat::Uchar4Norm => (1, 4),
+            VertexFormat::Char2Norm => (1, 2),
+            VertexFormat::Char4Norm => (1, 4),
+            VertexFormat::Ushort2 => (2, 2),
+            VertexFormat::Ushort4 => (2, 4),
+            VertexFormat::Short2 => (2, 2),
+            VertexFormat::Short4 => (2, 4),
+            VertexFormat::Ushort2Norm => (2, 2),
+            VertexFormat::Ushort4Norm => (2, 4),
+            VertexFormat::Short2Norm => (2, 2),
+            VertexFormat::Short4Norm => (2, 4),
+            VertexFormat::Half2 => (2, 2),
+            VertexFormat::Half4 => (2, 4),
+            VertexFormat::Float => (4, 1),
+            VertexFormat::Float2 => (4, 2),
+            VertexFormat::Float3 => (4, 3),
+            VertexFormat::Float4 => (4, 4),
+            VertexFormat::Uint => (4, 1),
+            VertexFormat::Uint2 => (4, 2),
+            VertexFormat::Uint3 => (4, 3),
+            VertexFormat::Uint4 => (4, 4),
+            VertexFormat::Int => (4, 1),
+            VertexFormat::Int2 => (4, 2),
+            VertexFormat::Int3 => (4, 3),
+            VertexFormat::Int4 => (4, 4),
         }
+    }
+    pub fn get_size(&self) -> u64 {
+        let (component_size, components) = self.get_sizes();
+        return (component_size * components) as u64;
     }
 }
 

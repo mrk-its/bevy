@@ -188,7 +188,7 @@ impl AssetServer {
 
     #[cfg(target_arch = "wasm32")]
     fn get_root_path(&self) -> Result<PathBuf, AssetServerError> {
-        Ok(PathBuf::from("/"))
+        Ok(PathBuf::from("."))
     }
 
     // TODO: add type checking here. people shouldn't be able to request a Handle<Texture> for a Mesh asset
