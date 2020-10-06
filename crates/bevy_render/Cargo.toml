@@ -48,10 +48,12 @@ parking_lot = "0.11.0"
 
 [dependencies.naga]
 # Temporarily git, either get kvark to publish a new version, or mirror
-git = "https://github.com/gfx-rs/naga.git"
-rev = "7f780e8efcdfe475d8bd57d9d77edeedab8ecc39"
+path = "../../../naga/"
+# git = "https://github.com/gfx-rs/naga.git"
+# rev = "773408663b7c94431fdbd53f9021808ac8c7fc89"
 optional = true
-features = ["glsl-new", "spirv"]
+features = ["glsl-in", "spv-in", "spv-out"]
+# features = ["glsl-new", "spirv"]
 
 [dev-dependencies]
 pretty_assertions = "0.6.1"

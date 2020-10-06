@@ -65,7 +65,7 @@ fn glsl_to_spirv(
 
         // The `glsl_new` naga frontend is still a work-in-progress.
         let module =
-            naga::front::glsl_new::parse_str(&source, "main".to_string(), stage.into()).unwrap();
+            naga::front::glsl::parse_str(&source, "main", stage.into()).unwrap();
         println!("{:#?}", module);
         let mut writer =
             naga::back::spv::Writer::new(&module.header, naga::back::spv::WriterFlags::NONE);

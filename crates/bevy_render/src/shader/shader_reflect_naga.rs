@@ -27,8 +27,7 @@ impl ShaderLayout {
             "shaders with multiple entry points are not supported yet"
         );
 
-        let entry_point = &module.entry_points[0];
-
+        let ((stage, name), entry_point) = &module.entry_points.iter().next().unwrap();
         let mut bind_groups = Vec::new();
         let mut vertex_buffer_descriptors = Vec::new();
 
@@ -37,19 +36,19 @@ impl ShaderLayout {
         for (_, global) in module.global_variables.iter() {
             if let Some(binding) = &global.binding {
                 match binding {
-                    &naga::Binding::Descriptor { set, binding } => {
+                    &naga::Binding::Resource { group, binding } => {
                         let bindings = if let Some(bind_group) = bind_groups
                             .iter_mut()
-                            .find(|bind_group: &&mut BindGroupDescriptor| bind_group.index == set)
+                            .find(|bind_group: &&mut BindGroupDescriptor| bind_group.index == group)
                         {
                             &mut bind_group.bindings
                         } else {
-                            bind_groups.push(BindGroupDescriptor::new(set, vec![]));
+                            bind_groups.push(BindGroupDescriptor::new(group, vec![]));
                             &mut bind_groups.last_mut().unwrap().bindings
                         };
 
                         bindings.push(
-                            reflect_binding_descriptor(&module, global, binding, entry_point.stage)
+                            reflect_binding_descriptor(&module, global, binding, *stage)
                                 .expect("unable to reflect binding descriptors"),
                         );
                     }
@@ -127,7 +126,7 @@ impl ShaderLayout {
         ShaderLayout {
             bind_groups,
             vertex_buffer_descriptors,
-            entry_point: entry_point.name.clone(),
+            entry_point: name.clone(),
         }
     }
 }
@@ -196,7 +195,7 @@ fn reflect_binding_descriptor(
                 ty.name.as_ref().unwrap().clone(),
                 BindType::Uniform {
                     dynamic: false,
-                    properties: vec![reflect_uniform_type(&module, &module.types[global.ty])?],
+                    property: reflect_uniform_type(&module, &module.types[global.ty])?,
                 },
             ),
             naga::StorageClass::StorageBuffer => (
@@ -208,35 +207,35 @@ fn reflect_binding_descriptor(
             ),
             _ => {
                 let bind_type = match ty.inner {
-                    naga::TypeInner::Image { base, dim, flags }
-                        if flags.contains(naga::ImageFlags::SAMPLED) =>
-                    {
-                        // assert!(
-                        //     flags.contains(naga::ImageFlags::SAMPLED),
-                        //     "image must be sampled"
-                        // );
+                    // naga::TypeInner::Image { base, dim, flags }
+                    //     if flags.contains(naga::ImageFlags::SAMPLED) =>
+                    // {
+                    //     // assert!(
+                    //     //     flags.contains(naga::ImageFlags::SAMPLED),
+                    //     //     "image must be sampled"
+                    //     // );
 
-                        let component_type = match &module.types[base].inner {
-                            naga::TypeInner::Scalar { kind, width: 4 } => match kind {
-                                naga::ScalarKind::Sint => TextureComponentType::Sint,
-                                naga::ScalarKind::Uint => TextureComponentType::Uint,
-                                naga::ScalarKind::Float => TextureComponentType::Float,
-                                naga::ScalarKind::Bool => return Err(()),
-                            },
-                            _ => return Err(()),
-                        };
+                    //     let component_type = match &module.types[base].inner {
+                    //         naga::TypeInner::Scalar { kind, width: 4 } => match kind {
+                    //             naga::ScalarKind::Sint => TextureComponentType::Sint,
+                    //             naga::ScalarKind::Uint => TextureComponentType::Uint,
+                    //             naga::ScalarKind::Float => TextureComponentType::Float,
+                    //             naga::ScalarKind::Bool => return Err(()),
+                    //         },
+                    //         _ => return Err(()),
+                    //     };
 
-                        BindType::SampledTexture {
-                            dimension: match dim {
-                                naga::ImageDimension::D1 => TextureViewDimension::D1,
-                                naga::ImageDimension::D2 => TextureViewDimension::D2,
-                                naga::ImageDimension::D3 => TextureViewDimension::D3,
-                                naga::ImageDimension::Cube => TextureViewDimension::Cube,
-                            },
-                            component_type,
-                            multisampled: flags.contains(naga::ImageFlags::MULTISAMPLED),
-                        }
-                    }
+                    //     BindType::SampledTexture {
+                    //         dimension: match dim {
+                    //             naga::ImageDimension::D1 => TextureViewDimension::D1,
+                    //             naga::ImageDimension::D2 => TextureViewDimension::D2,
+                    //             naga::ImageDimension::D3 => TextureViewDimension::D3,
+                    //             naga::ImageDimension::Cube => TextureViewDimension::Cube,
+                    //         },
+                    //         component_type,
+                    //         multisampled: flags.contains(naga::ImageFlags::MULTISAMPLED),
+                    //     }
+                    // }
                     naga::TypeInner::Sampler { comparison } => BindType::Sampler { comparison },
                     // _ => unimplemented!("unsupported bind type: {:?}", ty),
                     _ => return Err(()),
@@ -384,9 +383,9 @@ mod tests {
                             name: "Camera".into(),
                             bind_type: BindType::Uniform {
                                 dynamic: false,
-                                properties: vec![UniformProperty::Struct(vec![
+                                property: UniformProperty::Struct(vec![
                                     UniformProperty::Mat4
-                                ])],
+                                ]),
                             },
                             shader_stage: BindingShaderStage::VERTEX | BindingShaderStage::FRAGMENT,
                         }]
