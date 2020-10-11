@@ -508,6 +508,9 @@ pub fn mesh_resource_provider_system(
     mesh_events: Res<Events<AssetEvent<Mesh>>>,
     mut query: Query<(&Handle<Mesh>, &mut RenderPipelines)>,
 ) {
+    if !render_resource_context.is_ready() {
+        return;
+    }
     let vertex_buffer_descriptor = match state.vertex_buffer_descriptor {
         Some(value) => value,
         None => {

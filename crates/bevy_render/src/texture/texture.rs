@@ -80,6 +80,9 @@ impl Texture {
         texture_events: Res<Events<AssetEvent<Texture>>>,
     ) {
         let render_resource_context = &**render_resource_context;
+        if !render_resource_context.is_ready() {
+            return;
+        }
         let mut changed_textures = HashSet::default();
         for event in state.event_reader.iter(&texture_events) {
             match event {
