@@ -29,6 +29,10 @@ impl HeadlessRenderResourceContext {
 }
 
 impl RenderResourceContext for HeadlessRenderResourceContext {
+    fn is_ready(&self) -> bool {
+        true
+    }
+
     fn create_swap_chain(&self, _window: &Window) {}
 
     fn next_swap_chain_texture(&self, _window: &Window) -> TextureId {

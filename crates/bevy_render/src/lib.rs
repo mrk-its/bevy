@@ -32,7 +32,9 @@ use crate::prelude::*;
 use base::{MainPass, Msaa};
 use bevy_app::prelude::*;
 use bevy_asset::AddAsset;
-use bevy_ecs::{IntoQuerySystem, IntoThreadLocalSystem};
+use bevy_ecs::{
+    IntoQuerySystem, IntoThreadLocalSystem, ParallelExecutor, Resources, Schedule, System, World,
+};
 use camera::{
     ActiveCameras, Camera, OrthographicProjection, PerspectiveProjection, VisibleEntities,
 };
@@ -44,7 +46,7 @@ use render_graph::{
     base::{self, BaseRenderGraphBuilder, BaseRenderGraphConfig},
     RenderGraph,
 };
-use renderer::{AssetRenderResourceBindings, RenderResourceBindings};
+use renderer::{AssetRenderResourceBindings, RenderResourceBindings, RenderResourceContext};
 use std::ops::Range;
 #[cfg(feature = "hdr")]
 use texture::HdrTextureLoader;
@@ -66,7 +68,7 @@ pub mod stage {
 
 /// Adds core render types and systems to an App
 pub struct RenderPlugin {
-    /// configures the "base render graph". If this is not `None`, the "base render graph" will be added  
+    /// configures the "base render graph". If this is not `None`, the "base render graph" will be added
     pub base_render_graph_config: Option<BaseRenderGraphConfig>,
 }
 
@@ -144,15 +146,6 @@ impl Plugin for RenderPlugin {
                 bevy_app::stage::POST_UPDATE,
                 camera::visible_entities_system.system(),
             )
-            // TODO: turn these "resource systems" into graph nodes and remove the RENDER_RESOURCE stage
-            .add_system_to_stage(
-                stage::RENDER_RESOURCE,
-                mesh::mesh_resource_provider_system.system(),
-            )
-            .add_system_to_stage(
-                stage::RENDER_RESOURCE,
-                Texture::texture_resource_system.system(),
-            )
             .add_system_to_stage(
                 stage::RENDER_GRAPH_SYSTEMS,
                 render_graph::render_graph_schedule_executor_system.thread_local_system(),
@@ -162,6 +155,22 @@ impl Plugin for RenderPlugin {
                 stage::POST_RENDER,
                 shader::clear_shader_defs_system.system(),
             );
+
+        let mut schedule = Schedule::default();
+        schedule.add_stage(stage::RENDER_RESOURCE);
+        schedule.add_system_to_stage(
+            stage::RENDER_RESOURCE,
+            Texture::texture_resource_system.system(),
+        );
+        schedule.add_system_to_stage(
+            stage::RENDER_RESOURCE,
+            mesh::mesh_resource_provider_system.system(),
+        );
+        schedule.initialize(&mut app.app.world, &mut app.app.resources);
+        app.add_system_to_stage(
+            stage::RENDER_RESOURCE,
+            create_render_resource_scheduler_system(schedule),
+        );
 
         if app.resources().get::<Msaa>().is_none() {
             app.init_resource::<Msaa>();
@@ -182,4 +191,17 @@ impl Plugin for RenderPlugin {
             }
         }
     }
+}
+
+fn create_render_resource_scheduler_system(mut schedule: Schedule) -> Box<dyn System + 'static> {
+    let mut executor = ParallelExecutor::without_tracker_clears();
+    let system = move |world: &mut World, resources: &mut Resources| {
+        let is_ready = resources
+            .get::<Box<dyn RenderResourceContext>>()
+            .map_or(false, |ctx| ctx.is_ready());
+        if is_ready {
+            executor.run(&mut schedule, world, resources);
+        }
+    };
+    system.thread_local_system()
 }
