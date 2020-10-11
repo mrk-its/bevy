@@ -20,12 +20,17 @@ pub mod prelude {
         color::Color,
         draw::Draw,
         entity::*,
-        mesh::{shape, Mesh},
+        mesh::{shape, Mesh, MeshNode},
         pass::ClearColor,
         pipeline::RenderPipelines,
         shader::Shader,
         texture::Texture,
     };
+}
+
+pub mod node {
+    pub const TEXTURE: &str = "texture";
+    pub const MESH: &str = "mesh";
 }
 
 use crate::prelude::*;
@@ -51,12 +56,10 @@ use std::ops::Range;
 use texture::HdrTextureLoader;
 #[cfg(feature = "png")]
 use texture::ImageTextureLoader;
-use texture::TextureResourceSystemState;
+use texture::TextureNode;
 
 /// The names of "render" App stages
 pub mod stage {
-    /// Stage where render resources are set up
-    pub static RENDER_RESOURCE: &str = "render_resource";
     /// Stage where Render Graph systems are run. In general you shouldn't add systems to this stage manually.
     pub static RENDER_GRAPH_SYSTEMS: &str = "render_graph_systems";
     // Stage where draw systems are executed. This is generally where Draw components are setup
@@ -67,7 +70,7 @@ pub mod stage {
 
 /// Adds core render types and systems to an App
 pub struct RenderPlugin {
-    /// configures the "base render graph". If this is not `None`, the "base render graph" will be added  
+    /// configures the "base render graph". If this is not `None`, the "base render graph" will be added
     pub base_render_graph_config: Option<BaseRenderGraphConfig>,
 }
 
@@ -90,8 +93,7 @@ impl Plugin for RenderPlugin {
             app.add_asset_loader::<Texture, HdrTextureLoader>();
         }
 
-        app.add_stage_after(bevy_asset::stage::ASSET_EVENTS, stage::RENDER_RESOURCE)
-            .add_stage_after(stage::RENDER_RESOURCE, stage::RENDER_GRAPH_SYSTEMS)
+        app.add_stage_after(bevy_asset::stage::ASSET_EVENTS, stage::RENDER_GRAPH_SYSTEMS)
             .add_stage_after(stage::RENDER_GRAPH_SYSTEMS, stage::DRAW)
             .add_stage_after(stage::DRAW, stage::RENDER)
             .add_stage_after(stage::RENDER, stage::POST_RENDER)
@@ -116,7 +118,6 @@ impl Plugin for RenderPlugin {
             .init_resource::<PipelineCompiler>()
             .init_resource::<RenderResourceBindings>()
             .init_resource::<VertexBufferDescriptors>()
-            .init_resource::<TextureResourceSystemState>()
             .init_resource::<AssetRenderResourceBindings>()
             .init_resource::<ActiveCameras>()
             .add_system_to_stage(
@@ -140,15 +141,6 @@ impl Plugin for RenderPlugin {
                 bevy_app::stage::POST_UPDATE,
                 camera::visible_entities_system.system(),
             )
-            // TODO: turn these "resource systems" into graph nodes and remove the RENDER_RESOURCE stage
-            .add_system_to_stage(
-                stage::RENDER_RESOURCE,
-                mesh::mesh_resource_provider_system.system(),
-            )
-            .add_system_to_stage(
-                stage::RENDER_RESOURCE,
-                Texture::texture_resource_system.system(),
-            )
             .add_system_to_stage(
                 stage::RENDER_GRAPH_SYSTEMS,
                 render_graph::render_graph_schedule_executor_system.thread_local_system(),
@@ -163,9 +155,12 @@ impl Plugin for RenderPlugin {
             app.init_resource::<Msaa>();
         }
 
+        let resources = app.resources();
+        let mut render_graph = resources.get_mut::<RenderGraph>().unwrap();
+        render_graph.add_system_node(node::TEXTURE, TextureNode::default());
+        render_graph.add_system_node(node::MESH, MeshNode::default());
+
         if let Some(ref config) = self.base_render_graph_config {
-            let resources = app.resources();
-            let mut render_graph = resources.get_mut::<RenderGraph>().unwrap();
             let msaa = resources.get::<Msaa>().unwrap();
             render_graph.add_base_graph(config, &msaa);
             let mut active_cameras = resources.get_mut::<ActiveCameras>().unwrap();
