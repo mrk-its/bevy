@@ -5,7 +5,7 @@ use bevy_math::Size;
 use bevy_render::{
     draw::{Draw, DrawContext, Drawable},
     prelude::Msaa,
-    renderer::{AssetRenderResourceBindings, RenderResourceBindings},
+    renderer::{AssetRenderResourceBindings, RenderResourceBindings, RenderResourceContext},
     texture::Texture,
 };
 use bevy_sprite::TextureAtlas;
@@ -89,6 +89,7 @@ pub fn text_system(
 
 #[allow(clippy::too_many_arguments)]
 pub fn draw_text_system(
+    _render_resource_context: Res<Box<dyn RenderResourceContext>>,
     mut draw_context: DrawContext,
     fonts: Res<Assets<Font>>,
     msaa: Res<Msaa>,

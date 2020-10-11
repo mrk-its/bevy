@@ -211,6 +211,10 @@ impl<'a, T: Resource> FetchResource<'a> for FetchResourceRead<T> {
         Res::new(resources.get_unsafe_ref::<T>(ResourceIndex::Global))
     }
 
+    unsafe fn is_some(resources: &'a Resources, _system_id: Option<SystemId>) -> bool {
+        resources.contains::<T>()
+    }
+
     fn borrow(resources: &Resources) {
         resources.borrow::<T>();
     }
@@ -278,6 +282,10 @@ impl<'a, T: Resource> FetchResource<'a> for FetchResourceWrite<T> {
         ResMut::new(value, type_state.mutated())
     }
 
+    unsafe fn is_some(resources: &'a Resources, _system_id: Option<SystemId>) -> bool {
+        resources.contains::<T>()
+    }
+
     fn borrow(resources: &Resources) {
         resources.borrow_mut::<T>();
     }
@@ -318,6 +326,11 @@ impl<'a, T: Resource + FromResources> FetchResource<'a> for FetchResourceLocalMu
                 .as_ptr(),
             _marker: Default::default(),
         }
+    }
+
+    unsafe fn is_some(resources: &'a Resources, system_id: Option<SystemId>) -> bool {
+        let id = system_id.expect("Local<T> resources can only be used by systems");
+        resources.get_local::<T>(id).is_some()
     }
 
     fn borrow(resources: &Resources) {
