@@ -1,11 +1,10 @@
 use super::{SamplerDescriptor, TextureDescriptor, TextureFormat};
-use crate::{
-    render_graph::{CommandQueue, Node, SystemNode},
-    renderer::{RenderResource, RenderResourceContext, RenderResourceId, RenderResourceType},
+use crate::renderer::{
+    RenderResource, RenderResourceContext, RenderResourceId, RenderResourceType,
 };
 use bevy_app::prelude::{EventReader, Events};
 use bevy_asset::{AssetEvent, Assets, Handle};
-use bevy_ecs::{IntoQuerySystem, Res, ResMut};
+use bevy_ecs::{Res, ResMut};
 use bevy_math::Vec2;
 use bevy_utils::HashSet;
 
@@ -79,6 +78,9 @@ impl Texture {
         texture_events: Res<Events<AssetEvent<Texture>>>,
     ) {
         let render_resource_context = &**render_resource_context;
+        if !render_resource_context.is_ready() {
+            return;
+        }
         let mut changed_textures = HashSet::default();
         for event in state.event_reader.iter(&texture_events) {
             match event {
@@ -173,30 +175,5 @@ impl RenderResource for Handle<Texture> {
 
     fn texture(&self) -> Option<Handle<Texture>> {
         Some(*self)
-    }
-}
-
-#[derive(Default)]
-pub struct TextureNode {
-    command_queue: CommandQueue,
-}
-
-impl Node for TextureNode {
-    fn update(
-        &mut self,
-        _world: &bevy_ecs::World,
-        _resources: &bevy_ecs::Resources,
-        render_context: &mut dyn crate::renderer::RenderContext,
-        _input: &crate::render_graph::ResourceSlots,
-        _output: &mut crate::render_graph::ResourceSlots,
-    ) {
-        self.command_queue.execute(render_context);
-    }
-}
-
-impl SystemNode for TextureNode {
-    fn get_system(&self, commands: &mut bevy_ecs::Commands) -> Box<dyn bevy_ecs::System> {
-        commands.insert_resource(TextureResourceSystemState::default());
-        Texture::texture_resource_system.system()
     }
 }

@@ -4,13 +4,12 @@ use crate::{
         AsVertexBufferDescriptor, PrimitiveTopology, RenderPipelines, VertexBufferDescriptor,
         VertexBufferDescriptors, VertexFormat,
     },
-    render_graph::{CommandQueue, Node, SystemNode},
     renderer::{BufferInfo, BufferUsage, RenderResourceContext, RenderResourceId},
 };
 use bevy_app::prelude::{EventReader, Events};
 use bevy_asset::{AssetEvent, Assets, Handle};
 use bevy_core::AsBytes;
-use bevy_ecs::{IntoQuerySystem, Local, Query, Res, ResMut};
+use bevy_ecs::{Local, Query, Res, ResMut};
 use bevy_math::*;
 use bevy_utils::HashSet;
 use std::borrow::Cow;
@@ -18,7 +17,6 @@ use thiserror::Error;
 
 pub const VERTEX_BUFFER_ASSET_INDEX: usize = 0;
 pub const INDEX_BUFFER_ASSET_INDEX: usize = 1;
-
 #[derive(Clone, Debug)]
 pub enum VertexAttributeValues {
     Float(Vec<f32>),
@@ -508,6 +506,9 @@ pub fn mesh_resource_provider_system(
     mesh_events: Res<Events<AssetEvent<Mesh>>>,
     mut query: Query<(&Handle<Mesh>, &mut RenderPipelines)>,
 ) {
+    if !render_resource_context.is_ready() {
+        return;
+    }
     let vertex_buffer_descriptor = match state.vertex_buffer_descriptor {
         Some(value) => value,
         None => {
@@ -599,32 +600,6 @@ pub fn mesh_resource_provider_system(
                     }),
             );
         }
-    }
-}
-
-#[derive(Default)]
-pub struct MeshNode {
-    command_queue: CommandQueue,
-}
-
-impl Node for MeshNode {
-    fn update(
-        &mut self,
-        _world: &bevy_ecs::World,
-        _resources: &bevy_ecs::Resources,
-        render_context: &mut dyn crate::renderer::RenderContext,
-        _input: &crate::render_graph::ResourceSlots,
-        _output: &mut crate::render_graph::ResourceSlots,
-    ) {
-        self.command_queue.execute(render_context);
-    }
-}
-
-impl SystemNode for MeshNode {
-    fn get_system(&self, commands: &mut bevy_ecs::Commands) -> Box<dyn bevy_ecs::System> {
-        let system = mesh_resource_provider_system.system();
-        commands.insert_local_resource(system.id(), MeshResourceProviderState::default());
-        system
     }
 }
 
