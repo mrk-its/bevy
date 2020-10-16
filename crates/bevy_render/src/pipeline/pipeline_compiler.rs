@@ -60,6 +60,7 @@ struct SpecializedPipeline {
 pub struct DynamicBinding {
     pub bind_group: u32,
     pub binding: u32,
+    pub name: String,
 }
 
 #[derive(Debug, Default)]
@@ -80,7 +81,9 @@ impl PipelineCompiler {
             .entry(shader_handle.clone_weak())
             .or_insert_with(Vec::new);
 
+        log::info!("gettting shader: {:?}", shader_handle);
         let shader = shaders.get(shader_handle).unwrap();
+        log::info!("done");
 
         // don't produce new shader if the input source is already spirv
         if let ShaderSource::Spirv(_) = shader.source {
@@ -159,12 +162,13 @@ impl PipelineCompiler {
                 )
             });
 
-        specialized_descriptor.reflect_layout(
-            shaders,
+        specialized_descriptor.layout = Some(render_resource_context.reflect_pipeline_layout(
+            &shaders,
+            &specialized_descriptor.shader_stages,
             true,
             Some(vertex_buffer_descriptors),
             &pipeline_specialization.dynamic_bindings,
-        );
+        ));
 
         specialized_descriptor.sample_count = pipeline_specialization.sample_count;
         specialized_descriptor.primitive_topology = pipeline_specialization.primitive_topology;
@@ -172,6 +176,7 @@ impl PipelineCompiler {
 
         let specialized_pipeline_handle = pipelines.add(specialized_descriptor);
         render_resource_context.create_render_pipeline(
+            source_pipeline.clone_weak(),
             specialized_pipeline_handle.clone_weak(),
             pipelines.get(&specialized_pipeline_handle).unwrap(),
             &shaders,

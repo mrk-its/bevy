@@ -97,6 +97,7 @@ impl Plugin for RenderPlugin {
 
         app.add_stage_after(bevy_asset::stage::ASSET_EVENTS, stage::RENDER_RESOURCE)
             .add_stage_after(stage::RENDER_RESOURCE, stage::RENDER_GRAPH_SYSTEMS)
+            // .disable_stage(stage::RENDER_RESOURCE)
             .add_stage_after(stage::RENDER_GRAPH_SYSTEMS, stage::DRAW)
             .add_stage_after(stage::DRAW, stage::RENDER)
             .add_stage_after(stage::RENDER, stage::POST_RENDER)

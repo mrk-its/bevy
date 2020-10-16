@@ -128,11 +128,27 @@ impl Shader {
 
     #[allow(unused_variables)]
     pub fn get_spirv_shader(&self, macros: Option<&[String]>) -> Shader {
+        #[cfg(not(target_arch = "wasm32"))]
+        let source = { ShaderSource::Spirv(self.get_spirv(macros)) };
+        #[cfg(target_arch = "wasm32")]
+        let source = {
+            let mut context = gpp::Context::new();
+            if let Some(macros) = macros {
+                for m in macros.iter() {
+                    context.macros.insert(m.clone(), "true".to_string());
+                }
+            }
+            let postprocessed = if let ShaderSource::Glsl(source) = &self.source {
+                let source = source.replace("#version 300 es", "\n");
+                "#version 300 es\n".to_string() + &gpp::process_str(&source, &mut context).unwrap()
+            } else {
+                panic!("spirv shader is not supported");
+            };
+            log::info!("macros: {:?} postprocessed: {:#?}", macros, postprocessed);
+            ShaderSource::Glsl(postprocessed)
+        };
         Shader {
-            #[cfg(not(target_arch = "wasm32"))]
-            source: ShaderSource::Spirv(self.get_spirv(macros)),
-            #[cfg(target_arch = "wasm32")]
-            source: self.source.clone(),
+            source,
             stage: self.stage,
         }
     }

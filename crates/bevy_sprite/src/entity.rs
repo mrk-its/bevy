@@ -36,11 +36,13 @@ impl Default for SpriteComponents {
                         DynamicBinding {
                             bind_group: 2,
                             binding: 0,
+                            name: "Transform".to_string(),
                         },
                         // Sprite
                         DynamicBinding {
                             bind_group: 2,
                             binding: 1,
+                            name: "Sprite_size".to_string(),
                         },
                     ],
                     ..Default::default()
@@ -83,15 +85,15 @@ impl Default for SpriteSheetComponents {
                 SPRITE_SHEET_PIPELINE_HANDLE,
                 PipelineSpecialization {
                     dynamic_bindings: vec![
-                        // Transform
                         DynamicBinding {
                             bind_group: 2,
                             binding: 0,
+                            name: "Transform".to_string(),
                         },
-                        // TextureAtlasSprite
                         DynamicBinding {
                             bind_group: 2,
                             binding: 1,
+                            name: "TextureAtlasSprite".to_string(),
                         },
                     ],
                     ..Default::default()

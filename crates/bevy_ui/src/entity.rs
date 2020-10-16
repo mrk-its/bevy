@@ -36,15 +36,15 @@ impl Default for NodeComponents {
                 UI_PIPELINE_HANDLE,
                 PipelineSpecialization {
                     dynamic_bindings: vec![
-                        // Transform
                         DynamicBinding {
                             bind_group: 1,
                             binding: 0,
+                            name: "Transform".to_string(),
                         },
-                        // Node_size
                         DynamicBinding {
                             bind_group: 1,
                             binding: 1,
+                            name: "Node_size".to_string(),
                         },
                     ],
                     ..Default::default()
@@ -86,11 +86,13 @@ impl Default for ImageComponents {
                         DynamicBinding {
                             bind_group: 1,
                             binding: 0,
+                            name: "Transform".to_string(),
                         },
                         // Node_size
                         DynamicBinding {
                             bind_group: 1,
                             binding: 1,
+                            name: "Node_size".to_string(),
                         },
                     ],
                     ..Default::default()
@@ -162,15 +164,15 @@ impl Default for ButtonComponents {
                 UI_PIPELINE_HANDLE,
                 PipelineSpecialization {
                     dynamic_bindings: vec![
-                        // Transform
                         DynamicBinding {
                             bind_group: 1,
                             binding: 0,
+                            name: "Transform".to_string(),
                         },
-                        // Node_size
                         DynamicBinding {
                             bind_group: 1,
                             binding: 1,
+                            name: "Node_size".to_string(),
                         },
                     ],
                     ..Default::default()

@@ -47,6 +47,9 @@ parking_lot = "0.11.0"
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 spirv-reflect = "0.2.3"
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+gpp = "0.6.0"
+
 [target.'cfg(all(not(target_os = "ios"), not(target_arch = "wasm32")))'.dependencies]
 bevy-glsl-to-spirv = "0.1.7"
 

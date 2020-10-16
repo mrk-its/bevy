@@ -28,15 +28,15 @@ impl Default for PbrComponents {
                 FORWARD_PIPELINE_HANDLE,
                 PipelineSpecialization {
                     dynamic_bindings: vec![
-                        // Transform
                         DynamicBinding {
                             bind_group: 2,
                             binding: 0,
+                            name: "Transform".to_string(),
                         },
-                        // StandardMaterial_albedo
                         DynamicBinding {
                             bind_group: 3,
                             binding: 0,
+                            name: "StandardMaterial_albedo".to_string(),
                         },
                     ],
                     ..Default::default()

@@ -45,6 +45,9 @@ impl AddDefaultPlugins for AppBuilder {
         #[cfg(feature = "bevy_wgpu")]
         self.add_plugin(bevy_wgpu::WgpuPlugin::default());
 
+        #[cfg(feature = "bevy_webgl2")]
+        self.add_plugin(bevy_webgl2::WebGL2Plugin::default());
+
         self
     }
 }
