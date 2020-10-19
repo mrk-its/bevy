@@ -31,7 +31,7 @@ impl<'a> RenderPass for WebGL2RenderPass<'a> {
         // TODO - start_slot and offset parameters
         let resources = &self.render_context.render_resource_context.resources;
         let pipelines = resources.pipelines.read();
-        let pipeline_handle = self.pipeline.unwrap();
+        let pipeline_handle = self.pipeline.as_ref().unwrap();
         let pipeline = pipelines.get(&pipeline_handle).unwrap();
 
         let gl = &self.render_context.device.get_context();
@@ -141,8 +141,8 @@ impl<'a> RenderPass for WebGL2RenderPass<'a> {
         }
     }
 
-    fn set_pipeline(&mut self, pipeline_handle: Handle<PipelineDescriptor>) {
-        self.pipeline = Some(pipeline_handle);
+    fn set_pipeline(&mut self, pipeline_handle: &Handle<PipelineDescriptor>) {
+        self.pipeline = Some(pipeline_handle.as_weak());
 
         let resources = &self.render_context.render_resource_context.resources;
         let programs = resources.programs.read();

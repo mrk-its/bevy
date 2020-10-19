@@ -68,7 +68,7 @@ pub trait RenderResourceContext: Downcast + Send + Sync + 'static {
         pipeline_descriptor: &PipelineDescriptor,
         shaders: &Assets<Shader>,
     );
-    fn render_pipeline_exists(&self, _pipeline_handle: Handle<PipelineDescriptor>) -> bool {
+    fn render_pipeline_exists(&self, _pipeline_handle: &Handle<PipelineDescriptor>) -> bool {
         true
     }
     fn bind_group_descriptor_exists(&self, bind_group_descriptor_id: BindGroupDescriptorId)

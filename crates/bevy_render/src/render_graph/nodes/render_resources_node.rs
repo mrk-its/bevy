@@ -679,5 +679,5 @@ fn render_pipelines_exist(
         && render_pipelines
             .pipelines
             .iter()
-            .all(|f| render_resource_context.render_pipeline_exists(f.pipeline));
+            .all(|f| render_resource_context.render_pipeline_exists(&f.pipeline));
 }

@@ -190,7 +190,7 @@ impl RenderResourceContext for WebGL2RenderResourceContext {
         layout
     }
 
-    fn render_pipeline_exists(&self, pipeline_handle: Handle<PipelineDescriptor>) -> bool {
+    fn render_pipeline_exists(&self, pipeline_handle: &Handle<PipelineDescriptor>) -> bool {
         self.is_ready()
             && self
                 .pipeline_descriptors
@@ -334,7 +334,7 @@ impl RenderResourceContext for WebGL2RenderResourceContext {
         id
     }
 
-    fn create_shader_module(&self, _shader_handle: Handle<Shader>, _shaders: &Assets<Shader>) {}
+    fn create_shader_module(&self, _shader_handle: &Handle<Shader>, _shaders: &Assets<Shader>) {}
 
     fn remove_buffer(&self, buffer: BufferId) {
         let gl = &self.device.get_context();
@@ -536,7 +536,7 @@ impl RenderResourceContext for WebGL2RenderResourceContext {
         bind_groups.insert(bind_group.id, bind_group_vec);
     }
 
-    fn create_shader_module_from_source(&self, _shader_handle: Handle<Shader>, _shader: &Shader) {}
+    fn create_shader_module_from_source(&self, _shader_handle: &Handle<Shader>, _shader: &Shader) {}
 
     fn remove_asset_resource_untyped(&self, handle: HandleUntyped, index: usize) {
         self.resources
