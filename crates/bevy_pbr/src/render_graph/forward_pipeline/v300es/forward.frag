@@ -15,16 +15,16 @@ in vec2 v_Uv;
 
 out vec4 o_Target;
 
-uniform Camera {
+layout(std140) uniform Camera {
     mat4 ViewProj;
 };
 
-uniform Lights {
+layout(std140) uniform Lights {
     uvec4 NumLights;
     Light SceneLights[MAX_LIGHTS];
 };
 
-uniform StandardMaterial_albedo {
+layout(std140) uniform StandardMaterial_albedo {
     vec4 Albedo;
 };
 

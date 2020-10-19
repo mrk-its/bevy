@@ -17,6 +17,7 @@ pub const TEXTURE_ALIGNMENT: usize = 256;
 
 pub trait RenderResourceContext: Downcast + Send + Sync + 'static {
     fn is_ready(&self) -> bool;
+    fn flush(&self) {}
     fn create_swap_chain(&self, window: &Window);
     fn next_swap_chain_texture(&self, window: &Window) -> TextureId;
     fn drop_swap_chain_texture(&self, resource: TextureId);

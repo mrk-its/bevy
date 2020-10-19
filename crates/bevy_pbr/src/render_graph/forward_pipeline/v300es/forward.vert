@@ -9,11 +9,11 @@ out vec3 v_Position;
 out vec3 v_Normal;
 out vec2 v_Uv;
 
-uniform Camera {
+layout(std140) uniform Camera {
     mat4 ViewProj;
 };
 
-uniform Transform {
+layout(std140) uniform Transform {
     mat4 Model;
 };
 

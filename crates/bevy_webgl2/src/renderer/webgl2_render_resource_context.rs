@@ -131,6 +131,10 @@ impl RenderResourceContext for WebGL2RenderResourceContext {
     fn is_ready(&self) -> bool {
         self.initialized
     }
+    fn flush(&self) {
+        let gl = &self.device.get_context();
+        gl_call!(gl.flush());
+    }
 
     fn reflect_pipeline_layout(
         &self,
@@ -415,7 +419,7 @@ impl RenderResourceContext for WebGL2RenderResourceContext {
         for bind_group in layout.bind_groups.iter() {
             for binding in bind_group.bindings.iter() {
                 let block_index =
-                    crate::gl_call!(gl.get_uniform_block_index(&program, &binding.name));
+                    gl_call!(gl.get_uniform_block_index(&program, &binding.name));
                 log::info!("trying to bind {:?}", binding.name);
                 if (block_index as i32) < 0 {
                     log::info!("invalid block index for {:?}, skipping", &binding.name);

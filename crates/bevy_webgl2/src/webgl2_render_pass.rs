@@ -39,7 +39,7 @@ impl<'a> RenderPass for WebGL2RenderPass<'a> {
         assert!(pipeline.vertex_buffer_descriptors.len() == 1);
         let vertex_buffer_descriptor = &pipeline.vertex_buffer_descriptors[0];
 
-        gl.bind_vertex_array(Some(&pipeline.vao));
+        gl_call!(gl.bind_vertex_array(Some(&pipeline.vao)));
 
         self.bind_buffer(Gl::ARRAY_BUFFER, buffer_id);
         //self.bind_buffer(Gl::ELEMENT_ARRAY_BUFFER, buffer_id);

@@ -33,7 +33,8 @@ use base::{MainPass, Msaa};
 use bevy_app::prelude::*;
 use bevy_asset::AddAsset;
 use bevy_ecs::{
-    IntoQuerySystem, IntoThreadLocalSystem, ParallelExecutor, Resources, Schedule, System, World,
+    IntoQuerySystem, IntoThreadLocalSystem, ParallelExecutor, Res, Resources, Schedule, System,
+    World,
 };
 use camera::{
     ActiveCameras, Camera, OrthographicProjection, PerspectiveProjection, VisibleEntities,
@@ -155,7 +156,8 @@ impl Plugin for RenderPlugin {
             .add_system_to_stage(
                 stage::POST_RENDER,
                 shader::clear_shader_defs_system.system(),
-            );
+            )
+            .add_system_to_stage(stage::POST_RENDER, flush_render_resource_context.system());
 
         let mut schedule = Schedule::default();
         schedule.add_stage(stage::RENDER_RESOURCE);
@@ -205,4 +207,8 @@ fn create_render_resource_scheduler_system(mut schedule: Schedule) -> Box<dyn Sy
         }
     };
     system.thread_local_system()
+}
+
+fn flush_render_resource_context(render_resource_context: Res<Box<dyn RenderResourceContext>>) {
+    render_resource_context.flush();
 }
