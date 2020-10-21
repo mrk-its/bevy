@@ -89,4 +89,3 @@ pub use bevy_dynamic_plugin as dynamic_plugin;
 #[cfg(feature = "bevy_webgl2")]
 pub use bevy_webgl2 as webgl2;
 
-pub mod utils;
