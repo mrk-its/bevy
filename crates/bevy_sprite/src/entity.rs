@@ -6,7 +6,7 @@ use bevy_asset::Handle;
 use bevy_ecs::Bundle;
 use bevy_render::{
     mesh::Mesh,
-    pipeline::{DynamicBinding, PipelineSpecialization, RenderPipeline, RenderPipelines},
+    pipeline::{PipelineSpecialization, RenderPipeline, RenderPipelines},
     prelude::Draw,
     render_graph::base::MainPass,
 };
@@ -31,20 +31,7 @@ impl Default for SpriteComponents {
             render_pipelines: RenderPipelines::from_pipelines(vec![RenderPipeline::specialized(
                 SPRITE_PIPELINE_HANDLE,
                 PipelineSpecialization {
-                    dynamic_bindings: vec![
-                        // Transform
-                        DynamicBinding {
-                            bind_group: 2,
-                            binding: 0,
-                            name: "Transform".to_string(),
-                        },
-                        // Sprite
-                        DynamicBinding {
-                            bind_group: 2,
-                            binding: 1,
-                            name: "Sprite_size".to_string(),
-                        },
-                    ],
+                    dynamic_bindings: vec!["Transform".to_string(), "Sprite_size".to_string()],
                     ..Default::default()
                 },
             )]),
@@ -85,16 +72,8 @@ impl Default for SpriteSheetComponents {
                 SPRITE_SHEET_PIPELINE_HANDLE,
                 PipelineSpecialization {
                     dynamic_bindings: vec![
-                        DynamicBinding {
-                            bind_group: 2,
-                            binding: 0,
-                            name: "Transform".to_string(),
-                        },
-                        DynamicBinding {
-                            bind_group: 2,
-                            binding: 1,
-                            name: "TextureAtlasSprite".to_string(),
-                        },
+                        "Transform".to_string(),
+                        "TextureAtlasSprite".to_string(),
                     ],
                     ..Default::default()
                 },

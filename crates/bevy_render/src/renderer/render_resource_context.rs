@@ -1,6 +1,6 @@
 use crate::{
     pipeline::{
-        BindGroupDescriptorId, BindType, DynamicBinding, PipelineDescriptor, PipelineLayout,
+        BindGroupDescriptorId, BindType, PipelineDescriptor, PipelineLayout,
         VertexBufferDescriptors,
     },
     renderer::{BindGroup, BufferId, BufferInfo, RenderResourceId, SamplerId, TextureId},
@@ -95,7 +95,7 @@ pub trait RenderResourceContext: Downcast + Send + Sync + 'static {
         shader_stages: &ShaderStages,
         enforce_bevy_conventions: bool,
         vertex_buffer_descriptors: Option<&VertexBufferDescriptors>,
-        dynamic_bindings: &[DynamicBinding],
+        dynamic_bindings: &[String],
     ) -> PipelineLayout {
         // TODO: maybe move this default implementation to PipelineLayout?
         let mut shader_layouts: Vec<ShaderLayout> = shader_stages
@@ -114,11 +114,7 @@ pub trait RenderResourceContext: Downcast + Send + Sync + 'static {
             for bind_group in layout.bind_groups.iter_mut() {
                 let mut binding_changed = false;
                 for binding in bind_group.bindings.iter_mut() {
-                    let current = (bind_group.index, binding.index);
-                    if dynamic_bindings
-                        .iter()
-                        .any(|b| (b.bind_group, b.binding) == current)
-                    {
+                    if dynamic_bindings.iter().any(|b| b == &binding.name) {
                         if let BindType::Uniform {
                             ref mut dynamic, ..
                         } = binding.bind_type

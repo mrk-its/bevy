@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct PipelineSpecialization {
     pub shader_specialization: ShaderSpecialization,
     pub primitive_topology: PrimitiveTopology,
-    pub dynamic_bindings: Vec<DynamicBinding>,
+    pub dynamic_bindings: Vec<String>,
     pub index_format: IndexFormat,
     pub sample_count: u32,
 }
@@ -54,13 +54,6 @@ struct SpecializedShader {
 struct SpecializedPipeline {
     pipeline: Handle<PipelineDescriptor>,
     specialization: PipelineSpecialization,
-}
-
-#[derive(Clone, Eq, PartialEq, Debug, Default, Serialize, Deserialize, Property)]
-pub struct DynamicBinding {
-    pub bind_group: u32,
-    pub binding: u32,
-    pub name: String,
 }
 
 #[derive(Debug, Default)]

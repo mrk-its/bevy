@@ -1,4 +1,4 @@
-use super::{compile_shader, gl_vertex_format, link_program, reflect_layout, Gl, WebGlShader};
+use super::{compile_shader, link_program, reflect_layout, Gl, WebGlShader};
 use crate::{
     gl_call, Device, GlVertexBufferDescripror, WebGL2Pipeline, WebGL2RenderResourceBinding,
     WebGL2Resources,
@@ -6,7 +6,7 @@ use crate::{
 use bevy_asset::{Assets, Handle, HandleUntyped};
 use bevy_render::{
     pipeline::{
-        BindGroupDescriptor, BindGroupDescriptorId, BindType, BindingDescriptor, DynamicBinding,
+        BindGroupDescriptor, BindGroupDescriptorId, BindType, BindingDescriptor,
         PipelineDescriptor, PipelineLayout, VertexBufferDescriptors,
     },
     renderer::{
@@ -142,7 +142,7 @@ impl RenderResourceContext for WebGL2RenderResourceContext {
         shader_stages: &ShaderStages,
         _enforce_bevy_conventions: bool,
         vertex_buffer_descriptors: Option<&VertexBufferDescriptors>,
-        dynamic_bindings: &[DynamicBinding],
+        dynamic_bindings: &[String],
     ) -> PipelineLayout {
         log::info!("reflecting shader layoyut!");
         let gl_shaders: Vec<WebGlShader> = shader_stages
@@ -171,7 +171,7 @@ impl RenderResourceContext for WebGL2RenderResourceContext {
                 for binding in bind_group.bindings.iter_mut() {
                     if dynamic_bindings
                         .iter()
-                        .any(|dynamic_binding| dynamic_binding.name == binding.name)
+                        .any(|name| name == &binding.name)
                     {
                         if let BindType::Uniform {
                             ref mut dynamic, ..

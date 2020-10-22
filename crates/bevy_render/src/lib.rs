@@ -40,8 +40,8 @@ use camera::{
     ActiveCameras, Camera, OrthographicProjection, PerspectiveProjection, VisibleEntities,
 };
 use pipeline::{
-    DynamicBinding, IndexFormat, PipelineCompiler, PipelineDescriptor, PipelineSpecialization,
-    PrimitiveTopology, ShaderSpecialization, VertexBufferDescriptors,
+    IndexFormat, PipelineCompiler, PipelineDescriptor, PipelineSpecialization, PrimitiveTopology,
+    ShaderSpecialization, VertexBufferDescriptors,
 };
 use render_graph::{
     base::{self, BaseRenderGraphBuilder, BaseRenderGraphConfig},
@@ -116,7 +116,6 @@ impl Plugin for RenderPlugin {
             .register_property::<Color>()
             .register_property::<Range<f32>>()
             .register_property::<ShaderSpecialization>()
-            .register_property::<DynamicBinding>()
             .register_property::<PrimitiveTopology>()
             .register_property::<IndexFormat>()
             .register_properties::<PipelineSpecialization>()
