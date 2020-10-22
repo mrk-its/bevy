@@ -589,7 +589,11 @@ fn asset_render_resources_node_system<T: RenderResources + Asset>(
 
     for asset_handle in modified_assets.iter() {
         let asset = assets.get(*asset_handle).expect(EXPECT_ASSET_MESSAGE);
-        uniform_buffer_arrays.prepare_uniform_buffers(*asset_handle, asset, render_resource_context);
+        uniform_buffer_arrays.prepare_uniform_buffers(
+            *asset_handle,
+            asset,
+            render_resource_context,
+        );
         let mut bindings =
             asset_render_resource_bindings.get_or_insert_mut(&Handle::<T>::weak(*asset_handle));
         setup_uniform_texture_resources::<T>(&asset, render_resource_context, &mut bindings);

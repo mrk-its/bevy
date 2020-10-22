@@ -131,6 +131,7 @@ impl RenderResourceContext for WebGL2RenderResourceContext {
     fn is_ready(&self) -> bool {
         self.initialized
     }
+
     fn flush(&self) {
         let gl = &self.device.get_context();
         gl_call!(gl.flush());
@@ -169,10 +170,7 @@ impl RenderResourceContext for WebGL2RenderResourceContext {
             for bind_group in layout.bind_groups.iter_mut() {
                 let mut binding_changed = false;
                 for binding in bind_group.bindings.iter_mut() {
-                    if dynamic_bindings
-                        .iter()
-                        .any(|name| name == &binding.name)
-                    {
+                    if dynamic_bindings.iter().any(|name| name == &binding.name) {
                         if let BindType::Uniform {
                             ref mut dynamic, ..
                         } = binding.bind_type
@@ -418,8 +416,7 @@ impl RenderResourceContext for WebGL2RenderResourceContext {
         log::info!("start binding");
         for bind_group in layout.bind_groups.iter() {
             for binding in bind_group.bindings.iter() {
-                let block_index =
-                    gl_call!(gl.get_uniform_block_index(&program, &binding.name));
+                let block_index = gl_call!(gl.get_uniform_block_index(&program, &binding.name));
                 log::info!("trying to bind {:?}", binding.name);
                 if (block_index as i32) < 0 {
                     log::info!("invalid block index for {:?}, skipping", &binding.name);
