@@ -38,8 +38,8 @@ pub fn get_wgpu_render_system(resources: &mut Resources) -> impl FnMut(&mut Worl
         .unwrap_or_else(WgpuOptions::default);
     let mut wgpu_renderer = future::block_on(WgpuRenderer::new(options));
     let resource_context = WgpuRenderResourceContext::new(wgpu_renderer.device.clone());
-    resources.insert::<Box<dyn RenderResourceContext>>(Box::new(resource_context.clone()));
-    resources.insert(SharedBuffers::new(Box::new(resource_context)));
+    resources.insert::<Option<Box<dyn RenderResourceContext>>>(Some(Box::new(resource_context.clone())));
+    resources.insert(Some(SharedBuffers::new(Box::new(resource_context))));
     move |world, resources| {
         wgpu_renderer.update(world, resources);
     }

@@ -22,7 +22,7 @@ impl WebGL2RenderGraphExecutor {
         stages: &mut [StageBorrow],
     ) {
         let mut render_resource_context = resources
-            .get_mut::<Box<dyn RenderResourceContext>>()
+            .get_mut::<Option<Box<dyn RenderResourceContext>>>()
             .unwrap();
         let render_resource_context = render_resource_context
             .downcast_mut::<WebGL2RenderResourceContext>()

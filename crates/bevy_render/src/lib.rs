@@ -148,6 +148,14 @@ impl Plugin for RenderPlugin {
                 camera::visible_entities_system.system(),
             )
             .add_system_to_stage(
+                stage::RENDER_RESOURCE,
+                Texture::texture_resource_system.system(),
+            )
+            .add_system_to_stage(
+                stage::RENDER_RESOURCE,
+                mesh::mesh_resource_provider_system.system(),
+            )
+            .add_system_to_stage(
                 stage::RENDER_GRAPH_SYSTEMS,
                 render_graph::render_graph_schedule_executor_system.thread_local_system(),
             )
@@ -157,22 +165,6 @@ impl Plugin for RenderPlugin {
                 shader::clear_shader_defs_system.system(),
             )
             .add_system_to_stage(stage::POST_RENDER, flush_render_resource_context.system());
-
-        let mut schedule = Schedule::default();
-        schedule.add_stage(stage::RENDER_RESOURCE);
-        schedule.add_system_to_stage(
-            stage::RENDER_RESOURCE,
-            Texture::texture_resource_system.system(),
-        );
-        schedule.add_system_to_stage(
-            stage::RENDER_RESOURCE,
-            mesh::mesh_resource_provider_system.system(),
-        );
-        schedule.initialize(&mut app.app.world, &mut app.app.resources);
-        app.add_system_to_stage(
-            stage::RENDER_RESOURCE,
-            create_render_resource_scheduler_system(schedule),
-        );
 
         if app.resources().get::<Msaa>().is_none() {
             app.init_resource::<Msaa>();
@@ -195,19 +187,11 @@ impl Plugin for RenderPlugin {
     }
 }
 
-fn create_render_resource_scheduler_system(mut schedule: Schedule) -> Box<dyn System + 'static> {
-    let mut executor = ParallelExecutor::without_tracker_clears();
-    let system = move |world: &mut World, resources: &mut Resources| {
-        let is_ready = resources
-            .get::<Box<dyn RenderResourceContext>>()
-            .map_or(false, |ctx| ctx.is_ready());
-        if is_ready {
-            executor.run(&mut schedule, world, resources);
-        }
+fn flush_render_resource_context(render_resource_context: Res<Option<Box<dyn RenderResourceContext>>>) {
+    let render_resource_context = if render_resource_context.is_some() {
+        &**render_resource_context.as_ref().unwrap()
+    } else {
+        return
     };
-    system.thread_local_system()
-}
-
-fn flush_render_resource_context(render_resource_context: Res<Box<dyn RenderResourceContext>>) {
     render_resource_context.flush();
 }

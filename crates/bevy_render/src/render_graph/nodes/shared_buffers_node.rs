@@ -16,8 +16,11 @@ impl Node for SharedBuffersNode {
         _input: &ResourceSlots,
         _output: &mut ResourceSlots,
     ) {
-        let shared_buffers = resources.get::<SharedBuffers>().unwrap();
-        let mut command_queue = shared_buffers.reset_command_queue();
+        let shared_buffers = resources.get::<Option<SharedBuffers>>().unwrap();
+        if shared_buffers.is_none() {
+            return;
+        }
+        let mut command_queue = shared_buffers.as_ref().unwrap().reset_command_queue();
         command_queue.execute(render_context);
     }
 }

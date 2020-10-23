@@ -73,15 +73,15 @@ impl Default for RenderPipelines {
 }
 
 pub fn draw_render_pipelines_system(
-    render_resource_context: Res<Box<dyn RenderResourceContext>>,
+    render_resource_context: Res<Option<Box<dyn RenderResourceContext>>>,
     mut draw_context: DrawContext,
     mut render_resource_bindings: ResMut<RenderResourceBindings>,
     msaa: Res<Msaa>,
     meshes: Res<Assets<Mesh>>,
     mut query: Query<(&mut Draw, &mut RenderPipelines, &Handle<Mesh>)>,
 ) {
-    if !render_resource_context.is_ready() {
-        return;
+    if render_resource_context.is_none() {
+        return
     }
     for (mut draw, mut render_pipelines, mesh_handle) in &mut query.iter() {
         if !draw.is_visible {

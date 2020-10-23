@@ -91,6 +91,8 @@ impl SharedBuffers {
 }
 
 // TODO: remove this when this actually uses shared buffers
-pub fn free_shared_buffers_system(shared_buffers: Res<SharedBuffers>) {
-    shared_buffers.free_buffers();
+pub fn free_shared_buffers_system(shared_buffers: Res<Option<SharedBuffers>>) {
+    if shared_buffers.is_some() {
+        shared_buffers.as_ref().unwrap().free_buffers();
+    }
 }

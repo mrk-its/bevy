@@ -130,9 +130,9 @@ pub struct DrawContext<'a> {
     pub pipelines: ResMut<'a, Assets<PipelineDescriptor>>,
     pub shaders: ResMut<'a, Assets<Shader>>,
     pub pipeline_compiler: ResMut<'a, PipelineCompiler>,
-    pub render_resource_context: Res<'a, Box<dyn RenderResourceContext>>,
+    pub render_resource_context: Res<'a, Option<Box<dyn RenderResourceContext>>>,
     pub vertex_buffer_descriptors: Res<'a, VertexBufferDescriptors>,
-    pub shared_buffers: Res<'a, SharedBuffers>,
+    pub shared_buffers: Res<'a, Option<SharedBuffers>>,
     pub current_pipeline: Option<Handle<PipelineDescriptor>>,
 }
 
@@ -165,18 +165,18 @@ impl<'a> FetchResource<'a> for FetchDrawContext {
         resources.borrow_mut::<Assets<PipelineDescriptor>>();
         resources.borrow_mut::<Assets<Shader>>();
         resources.borrow_mut::<PipelineCompiler>();
-        resources.borrow::<Box<dyn RenderResourceContext>>();
+        resources.borrow::<Option<Box<dyn RenderResourceContext>>>();
         resources.borrow::<VertexBufferDescriptors>();
-        resources.borrow::<SharedBuffers>();
+        resources.borrow::<Option<SharedBuffers>>();
     }
 
     fn release(resources: &Resources) {
         resources.release_mut::<Assets<PipelineDescriptor>>();
         resources.release_mut::<Assets<Shader>>();
         resources.release_mut::<PipelineCompiler>();
-        resources.release::<Box<dyn RenderResourceContext>>();
+        resources.release::<Option<Box<dyn RenderResourceContext>>>();
         resources.release::<VertexBufferDescriptors>();
-        resources.release::<SharedBuffers>();
+        resources.release::<Option<SharedBuffers>>();
     }
 
     unsafe fn get(resources: &'a Resources, _system_id: Option<SystemId>) -> Self::Item {
@@ -203,13 +203,13 @@ impl<'a> FetchResource<'a> for FetchDrawContext {
             shaders,
             pipeline_compiler,
             render_resource_context: Res::new(
-                resources.get_unsafe_ref::<Box<dyn RenderResourceContext>>(ResourceIndex::Global),
+                resources.get_unsafe_ref::<Option<Box<dyn RenderResourceContext>>>(ResourceIndex::Global),
             ),
             vertex_buffer_descriptors: Res::new(
                 resources.get_unsafe_ref::<VertexBufferDescriptors>(ResourceIndex::Global),
             ),
             shared_buffers: Res::new(
-                resources.get_unsafe_ref::<SharedBuffers>(ResourceIndex::Global),
+                resources.get_unsafe_ref::<Option<SharedBuffers>>(ResourceIndex::Global),
             ),
             current_pipeline: None,
         }
@@ -224,11 +224,11 @@ impl<'a> FetchResource<'a> for FetchDrawContext {
         access.mutable.insert(TypeId::of::<PipelineCompiler>());
         access
             .immutable
-            .insert(TypeId::of::<Box<dyn RenderResourceContext>>());
+            .insert(TypeId::of::<Option<Box<dyn RenderResourceContext>>>());
         access
             .immutable
             .insert(TypeId::of::<VertexBufferDescriptors>());
-        access.immutable.insert(TypeId::of::<SharedBuffers>());
+        access.immutable.insert(TypeId::of::<Option<SharedBuffers>>());
         access
     }
 }
@@ -246,7 +246,7 @@ impl<'a> DrawContext<'a> {
         render_resource: &T,
         buffer_usage: BufferUsage,
     ) -> Result<RenderResourceBinding, DrawError> {
-        self.shared_buffers
+        self.shared_buffers.as_ref().unwrap()
             .get_buffer(render_resource, buffer_usage)
             .ok_or(DrawError::BufferAllocationFailure)
     }
@@ -257,6 +257,9 @@ impl<'a> DrawContext<'a> {
         pipeline_handle: &Handle<PipelineDescriptor>,
         specialization: &PipelineSpecialization,
     ) -> Result<(), DrawError> {
+        if self.render_resource_context.is_none() {
+            return Ok(())
+        }
         let specialized_pipeline = if let Some(specialized_pipeline) = self
             .pipeline_compiler
             .get_specialized_pipeline(pipeline_handle, specialization)
@@ -264,7 +267,7 @@ impl<'a> DrawContext<'a> {
             specialized_pipeline
         } else {
             self.pipeline_compiler.compile_pipeline(
-                &**self.render_resource_context,
+                &**self.render_resource_context.as_ref().unwrap(),
                 &mut self.pipelines,
                 &mut self.shaders,
                 pipeline_handle,
@@ -298,6 +301,9 @@ impl<'a> DrawContext<'a> {
         draw: &mut Draw,
         render_resource_bindings: &mut [&mut RenderResourceBindings],
     ) -> Result<(), DrawError> {
+        if self.render_resource_context.is_none() {
+            return Ok(())
+        }
         let pipeline = self
             .current_pipeline
             .as_ref()
@@ -310,7 +316,7 @@ impl<'a> DrawContext<'a> {
             .get_layout()
             .ok_or(DrawError::PipelineHasNoLayout)?;
         for bindings in render_resource_bindings.iter_mut() {
-            bindings.update_bind_groups(pipeline_descriptor, &**self.render_resource_context);
+            bindings.update_bind_groups(pipeline_descriptor, &**self.render_resource_context.as_ref().unwrap());
         }
         for bind_group_descriptor in layout.bind_groups.iter() {
             for bindings in render_resource_bindings.iter_mut() {
@@ -331,6 +337,9 @@ impl<'a> DrawContext<'a> {
         index: u32,
         bind_group: &BindGroup,
     ) -> Result<(), DrawError> {
+        if self.render_resource_context.is_none() {
+            return Ok(())
+        }
         let pipeline = self
             .current_pipeline
             .as_ref()
@@ -343,7 +352,7 @@ impl<'a> DrawContext<'a> {
             .get_layout()
             .ok_or(DrawError::PipelineHasNoLayout)?;
         let bind_group_descriptor = &layout.bind_groups[index as usize];
-        self.render_resource_context
+        self.render_resource_context.as_ref().unwrap()
             .create_bind_group(bind_group_descriptor.id, bind_group);
         Ok(())
     }

@@ -23,10 +23,10 @@ impl WgpuRenderGraphExecutor {
         stages: &mut [StageBorrow],
     ) {
         let mut render_resource_context = resources
-            .get_mut::<Box<dyn RenderResourceContext>>()
+            .get_mut::<Option<Box<dyn RenderResourceContext>>>()
             .unwrap();
         let render_resource_context = render_resource_context
-            .downcast_mut::<WgpuRenderResourceContext>()
+            .as_mut().unwrap().downcast_mut::<WgpuRenderResourceContext>()
             .unwrap();
         let node_outputs: Arc<RwLock<HashMap<NodeId, ResourceSlots>>> = Default::default();
         for stage in stages.iter_mut() {

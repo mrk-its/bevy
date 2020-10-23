@@ -83,12 +83,13 @@ impl WgpuResourceDiagnosticsPlugin {
 
     pub fn diagnostic_system(
         mut diagnostics: ResMut<Diagnostics>,
-        render_resource_context: Res<Box<dyn RenderResourceContext>>,
+        render_resource_context: Res<Option<Box<dyn RenderResourceContext>>>,
     ) {
-        let render_resource_context = render_resource_context
-            .downcast_ref::<WgpuRenderResourceContext>()
-            .unwrap();
-
+        let render_resource_context = if render_resource_context.is_some() {
+            render_resource_context.as_ref().unwrap().downcast_ref::<WgpuRenderResourceContext>().unwrap()
+        } else {
+            return
+        };
         diagnostics.add_measurement(
             Self::WINDOW_SURFACES,
             render_resource_context

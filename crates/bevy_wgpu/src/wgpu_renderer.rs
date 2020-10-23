@@ -65,10 +65,10 @@ impl WgpuRenderer {
 
     pub fn handle_window_created_events(&mut self, resources: &Resources) {
         let mut render_resource_context = resources
-            .get_mut::<Box<dyn RenderResourceContext>>()
+            .get_mut::<Option<Box<dyn RenderResourceContext>>>()
             .unwrap();
         let render_resource_context = render_resource_context
-            .downcast_mut::<WgpuRenderResourceContext>()
+            .as_mut().unwrap().downcast_mut::<WgpuRenderResourceContext>()
             .unwrap();
         let windows = resources.get::<Windows>().unwrap();
         let window_created_events = resources.get::<Events<WindowCreated>>().unwrap();
@@ -113,7 +113,11 @@ impl WgpuRenderer {
         self.handle_window_created_events(resources);
         self.run_graph(world, resources);
 
-        let render_resource_context = resources.get::<Box<dyn RenderResourceContext>>().unwrap();
+        let render_resource_context = resources.get::<Option<Box<dyn RenderResourceContext>>>().unwrap();
+        if render_resource_context.is_none() {
+            return;
+        }
+        let render_resource_context = render_resource_context.as_ref().unwrap();
         render_resource_context.drop_all_swap_chain_textures();
         render_resource_context.clear_bind_groups();
     }

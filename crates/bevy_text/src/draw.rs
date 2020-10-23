@@ -45,6 +45,9 @@ pub struct DrawableText<'a> {
 
 impl<'a> Drawable for DrawableText<'a> {
     fn draw(&mut self, draw: &mut Draw, context: &mut DrawContext) -> Result<(), DrawError> {
+        if context.render_resource_context.as_ref().is_none() {
+            return Ok(())
+        }
         context.set_pipeline(
             draw,
             &bevy_sprite::SPRITE_SHEET_PIPELINE_HANDLE,
@@ -54,7 +57,7 @@ impl<'a> Drawable for DrawableText<'a> {
             },
         )?;
 
-        let render_resource_context = &**context.render_resource_context;
+        let render_resource_context = &**context.render_resource_context.as_ref().unwrap();
         if let Some(RenderResourceId::Buffer(quad_vertex_buffer)) = render_resource_context
             .get_asset_resource(&bevy_sprite::QUAD_HANDLE, mesh::VERTEX_BUFFER_ASSET_INDEX)
         {
@@ -134,11 +137,11 @@ impl<'a> Drawable for DrawableText<'a> {
                     };
 
                     let transform_buffer = context
-                        .shared_buffers
+                        .shared_buffers.as_ref().unwrap()
                         .get_buffer(&transform, BufferUsage::UNIFORM)
                         .unwrap();
                     let sprite_buffer = context
-                        .shared_buffers
+                        .shared_buffers.as_ref().unwrap()
                         .get_buffer(&sprite, BufferUsage::UNIFORM)
                         .unwrap();
                     let sprite_bind_group = BindGroup::build()

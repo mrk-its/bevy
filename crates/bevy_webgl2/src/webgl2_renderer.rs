@@ -5,7 +5,7 @@ use bevy_render::{
     render_graph::{
         DependentNodeStager, Edge, NodeId, RenderGraph, RenderGraphStager, ResourceSlots,
     },
-    renderer::RenderResourceContext,
+    renderer::{RenderResourceContext, SharedBuffers},
 };
 use bevy_window::{WindowCreated, Windows};
 use std::sync::Arc;
@@ -56,28 +56,36 @@ impl std::default::Default for WebGL2Renderer {
     }
 }
 impl WebGL2Renderer {
-    pub fn handle_window_created_events(&mut self, resources: &Resources) {
-        let mut render_resource_context = resources
-            .get_mut::<Box<dyn RenderResourceContext>>()
-            .unwrap();
-        let render_resource_context = render_resource_context
-            .downcast_mut::<WebGL2RenderResourceContext>()
-            .unwrap();
-        let windows = resources.get::<Windows>().unwrap();
-        let window_created_events = resources.get::<Events<WindowCreated>>().unwrap();
-        for window_created_event in self
-            .window_created_event_reader
-            .iter(&window_created_events)
+    pub fn handle_window_created_events(&mut self, resources: &mut Resources) {
+        let webgl_device = (*resources.get::<Arc<Device>>().unwrap()).clone();
+        let events: Vec<_> =  {
+            let window_created_events = resources.get::<Events<WindowCreated>>().unwrap();
+            self.window_created_event_reader.iter(&window_created_events).cloned().collect()
+        };
+        for window_created_event in events
         {
-            let window = windows
-                .get(window_created_event.id)
-                .expect("Received window created event for non-existent window");
             #[cfg(feature = "bevy_winit")]
             {
-                let winit_windows = resources.get::<bevy_winit::WinitWindows>().unwrap();
-                let winit_window = winit_windows.get_window(window.id()).unwrap();
-                render_resource_context.initialize(&winit_window);
+                let window_id = {
+                    let windows = resources.get::<Windows>().unwrap();
+                    let window = windows
+                        .get(window_created_event.id)
+                        .expect("Received window created event for non-existent window");
+                    window.id()
+                };
+                let resource_context = {
+                    let mut resource_context = WebGL2RenderResourceContext::new(webgl_device);
+                    let winit_windows = resources.get::<bevy_winit::WinitWindows>().unwrap();
+                    let winit_window = winit_windows.get_window(window_id).unwrap();
+                    resource_context.initialize(&winit_window);
+                    resource_context
+                };
+
+                resources.insert::<Option<Box<dyn RenderResourceContext>>>(Some(Box::new(resource_context.clone())));
+                resources.insert(Some(SharedBuffers::new(Box::new(resource_context))));
+
             }
+            break;
         }
     }
 
@@ -88,10 +96,10 @@ impl WebGL2Renderer {
         let stages = stager.get_stages(&render_graph).unwrap();
         let mut borrowed = stages.borrow(&mut render_graph);
         let mut render_resource_context = resources
-            .get_mut::<Box<dyn RenderResourceContext>>()
+            .get_mut::<Option<Box<dyn RenderResourceContext>>>()
             .unwrap();
         let render_resource_context = render_resource_context
-            .downcast_mut::<WebGL2RenderResourceContext>()
+            .as_mut().unwrap().downcast_mut::<WebGL2RenderResourceContext>()
             .unwrap();
         let node_outputs: Arc<RwLock<HashMap<NodeId, ResourceSlots>>> = Default::default();
         for stage in borrowed.iter_mut() {
@@ -159,7 +167,11 @@ impl WebGL2Renderer {
     pub fn update(&mut self, world: &mut World, resources: &mut Resources) {
         self.handle_window_created_events(resources);
         self.run_graph(world, resources);
-        let render_resource_context = resources.get::<Box<dyn RenderResourceContext>>().unwrap();
+        let render_resource_context = resources.get::<Option<Box<dyn RenderResourceContext>>>().unwrap();
+        if render_resource_context.is_none() {
+            return;
+        }
+        let render_resource_context = render_resource_context.as_ref().unwrap();
         render_resource_context.drop_all_swap_chain_textures();
         render_resource_context.clear_bind_groups();
     }

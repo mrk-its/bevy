@@ -77,14 +77,17 @@ pub struct LightsNodeSystemState {
 
 pub fn lights_node_system(
     mut state: Local<LightsNodeSystemState>,
-    render_resource_context: Res<Box<dyn RenderResourceContext>>,
+    render_resource_context: Res<Option<Box<dyn RenderResourceContext>>>,
     // TODO: this write on RenderResourceBindings will prevent this system from running in parallel with other systems that do the same
     mut render_resource_bindings: ResMut<RenderResourceBindings>,
     mut query: Query<(&Light, &GlobalTransform)>,
 ) {
     let state = &mut state;
-    let render_resource_context = &**render_resource_context;
-
+    let render_resource_context = if render_resource_context.is_some() {
+        &**render_resource_context.as_ref().unwrap()
+    } else {
+        return
+    };
     let light_count = query.iter().iter().count();
     let size = std::mem::size_of::<LightRaw>();
     let light_count_size = std::mem::size_of::<LightCount>();

@@ -431,12 +431,16 @@ impl<I, T: RenderResources> Default for RenderResourcesNodeState<I, T> {
 
 fn render_resources_node_system<T: RenderResources>(
     mut state: Local<RenderResourcesNodeState<Entity, T>>,
-    render_resource_context: Res<Box<dyn RenderResourceContext>>,
+    render_resource_context: Res<Option<Box<dyn RenderResourceContext>>>,
     mut query: Query<(Entity, &T, &Draw, &mut RenderPipelines)>,
 ) {
+    let render_resource_context = if render_resource_context.is_some() {
+        &**render_resource_context.as_ref().unwrap()
+    } else {
+        return
+    };
     let state = state.deref_mut();
     let uniform_buffer_arrays = &mut state.uniform_buffer_arrays;
-    let render_resource_context = &**render_resource_context;
     uniform_buffer_arrays.begin_update();
     // initialize uniform buffer arrays using the first RenderResources
     match query.iter().iter().next() {
@@ -563,13 +567,16 @@ fn asset_render_resources_node_system<T: RenderResources + Asset>(
     mut state: Local<RenderResourcesNodeState<HandleId, T>>,
     assets: Res<Assets<T>>,
     mut asset_render_resource_bindings: ResMut<AssetRenderResourceBindings>,
-    render_resource_context: Res<Box<dyn RenderResourceContext>>,
+    render_resource_context: Res<Option<Box<dyn RenderResourceContext>>>,
     mut query: Query<(&Handle<T>, &Draw, &mut RenderPipelines)>,
 ) {
     let state = state.deref_mut();
     let uniform_buffer_arrays = &mut state.uniform_buffer_arrays;
-    let render_resource_context = &**render_resource_context;
-
+    let render_resource_context = if render_resource_context.is_some() {
+        &**render_resource_context.as_ref().unwrap()
+    } else {
+        return
+    };
     match query.iter().iter().next() {
         Some((_, _, render_pipelines)) => {
             if !render_pipelines_exist(render_resource_context, &*render_pipelines) {

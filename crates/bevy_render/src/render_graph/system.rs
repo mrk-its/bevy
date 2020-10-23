@@ -3,10 +3,8 @@ use crate::renderer::RenderResourceContext;
 use bevy_ecs::{Resources, World};
 
 pub fn render_graph_schedule_executor_system(world: &mut World, resources: &mut Resources) {
-    if !resources
-        .get::<Box<dyn RenderResourceContext>>()
-        .unwrap()
-        .is_ready()
+    if resources
+        .get::<Option<Box<dyn RenderResourceContext>>>().unwrap().is_none()
     {
         return;
     }

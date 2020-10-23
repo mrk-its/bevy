@@ -502,15 +502,18 @@ pub struct MeshResourceProviderState {
 
 pub fn mesh_resource_provider_system(
     mut state: Local<MeshResourceProviderState>,
-    render_resource_context: Res<Box<dyn RenderResourceContext>>,
+    render_resource_context: Res<Option<Box<dyn RenderResourceContext>>>,
     meshes: Res<Assets<Mesh>>,
     mut vertex_buffer_descriptors: ResMut<VertexBufferDescriptors>,
     mesh_events: Res<Events<AssetEvent<Mesh>>>,
     mut query: Query<(&Handle<Mesh>, &mut RenderPipelines)>,
 ) {
-    if !render_resource_context.is_ready() {
-        return;
-    }
+    let render_resource_context = if render_resource_context.is_some() {
+        &**render_resource_context.as_ref().unwrap()
+    } else {
+        return
+    };
+
     let vertex_buffer_descriptor = match state.vertex_buffer_descriptor {
         Some(value) => value,
         None => {
@@ -522,7 +525,6 @@ pub fn mesh_resource_provider_system(
         }
     };
     let mut changed_meshes = HashSet::<Handle<Mesh>>::default();
-    let render_resource_context = &**render_resource_context;
     for event in state.mesh_event_reader.iter(&mesh_events) {
         match event {
             AssetEvent::Created { ref handle } => {

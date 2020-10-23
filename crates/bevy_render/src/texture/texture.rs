@@ -75,14 +75,15 @@ impl Texture {
 
     pub fn texture_resource_system(
         mut state: ResMut<TextureResourceSystemState>,
-        render_resource_context: Res<Box<dyn RenderResourceContext>>,
+        render_resource_context: Res<Option<Box<dyn RenderResourceContext>>>,
         textures: Res<Assets<Texture>>,
         texture_events: Res<Events<AssetEvent<Texture>>>,
     ) {
-        let render_resource_context = &**render_resource_context;
-        if !render_resource_context.is_ready() {
-            return;
-        }
+        let render_resource_context = if render_resource_context.is_some() {
+            &**render_resource_context.as_ref().unwrap()
+        } else {
+            return
+        };
         let mut changed_textures = HashSet::default();
         for event in state.event_reader.iter(&texture_events) {
             match event {

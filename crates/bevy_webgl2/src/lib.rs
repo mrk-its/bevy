@@ -36,9 +36,9 @@ impl Plugin for WebGL2Plugin {
 
 pub fn webgl2_render_system(resources: &mut Resources) -> impl FnMut(&mut World, &mut Resources) {
     let mut webgl2_renderer = WebGL2Renderer::default();
-    let resource_context = WebGL2RenderResourceContext::new(webgl2_renderer.device.clone());
-    resources.insert::<Box<dyn RenderResourceContext>>(Box::new(resource_context.clone()));
-    resources.insert(SharedBuffers::new(Box::new(resource_context)));
+    resources.insert(webgl2_renderer.device.clone());
+    resources.insert::<Option<Box<dyn RenderResourceContext>>>(None);
+    resources.insert::<Option<SharedBuffers>>(None);
     move |world, resources| {
         webgl2_renderer.update(world, resources);
     }
