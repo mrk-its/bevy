@@ -137,7 +137,7 @@ pub fn draw_render_pipelines_system(
                 .unwrap();
 
             if let Some(indices) = index_range.clone() {
-                draw.draw_indexed(indices, 0, 0..1);
+                draw.draw_indexed(indices, 0, 0..mesh.instances());
             }
         }
     }

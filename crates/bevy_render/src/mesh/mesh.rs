@@ -107,6 +107,7 @@ pub struct Mesh {
     /// `bevy_utils::HashMap` with all defined vertex attributes (Positions, Normals, ...) for this mesh. Attribute name maps to attribute values.
     attributes: HashMap<Cow<'static, str>, VertexAttributeValues>,
     indices: Option<Indices>,
+    instances: u32,
 }
 
 impl Mesh {
@@ -119,6 +120,7 @@ impl Mesh {
             primitive_topology,
             attributes: Default::default(),
             indices: None,
+            instances: 1,
         }
     }
 
@@ -145,6 +147,14 @@ impl Mesh {
 
     pub fn indices(&self) -> Option<&Indices> {
         self.indices.as_ref()
+    }
+
+    pub fn set_instances(&mut self, instances: u32) {
+        self.instances = instances;
+    }
+
+    pub fn instances(&self) -> u32 {
+        self.instances
     }
 
     pub fn get_index_buffer_bytes(&self) -> Option<Vec<u8>> {
