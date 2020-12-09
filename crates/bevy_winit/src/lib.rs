@@ -24,6 +24,7 @@ use winit::{
     event::{self, DeviceEvent, Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop, EventLoopWindowTarget},
 };
+use bevy_utils::{Instant, Duration};
 
 #[cfg(any(
     target_os = "linux",
@@ -210,15 +211,18 @@ pub fn winit_runner_with(mut app: App, mut event_loop: EventLoop<()>) {
 
     trace!("Entering winit event loop");
 
-    let should_return_from_run = app
-        .resources
-        .get::<WinitConfig>()
-        .map_or(false, |config| config.return_from_run);
+    let winit_config =  app.resources.get::<WinitConfig>().map(|x| *x).unwrap_or_default();
+
+    let next_update = std::rc::Rc::new(std::cell::RefCell::new(Instant::now()));
 
     let event_handler = move |event: Event<()>,
                               event_loop: &EventLoopWindowTarget<()>,
                               control_flow: &mut ControlFlow| {
-        *control_flow = ControlFlow::Poll;
+        if winit_config.force_fps.is_none() {
+            *control_flow = ControlFlow::Poll
+        } else {
+            *control_flow = ControlFlow::WaitUntil(*next_update.borrow());
+        }
 
         if let Some(app_exit_events) = app.resources.get_mut::<Events<AppExit>>() {
             if app_exit_event_reader
@@ -464,12 +468,22 @@ pub fn winit_runner_with(mut app: App, mut event_loop: EventLoop<()>) {
                     event_loop,
                     &mut create_window_event_reader,
                 );
-                app.update();
+                if let Some(force_fps) = winit_config.force_fps {
+                    let now = Instant::now();
+                    let mut scheduled_update = next_update.borrow_mut();
+                    if now >= *scheduled_update {
+                        *scheduled_update = (*scheduled_update + Duration::from_secs_f32(1.0 / force_fps)).max(now);
+                        *control_flow = ControlFlow::WaitUntil(*scheduled_update);
+                        app.update();
+                    }
+                } else {
+                    app.update();
+                }
             }
             _ => (),
         }
     };
-    if should_return_from_run {
+    if winit_config.return_from_run {
         run_return(&mut event_loop, event_handler);
     } else {
         run(event_loop, event_handler);

@@ -1,5 +1,5 @@
 /// A resource for configuring usage of the `rust_winit` library.
-#[derive(Debug, Default)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct WinitConfig {
     /// Configures the winit library to return control to the main thread after
     /// the [run](bevy_app::App::run) loop is exited. Winit strongly recommends
@@ -12,4 +12,5 @@ pub struct WinitConfig {
     /// `openbsd`. If set to true on an unsupported platform
     /// [run](bevy_app::App::run) will panic.
     pub return_from_run: bool,
+    pub force_fps: Option<f32>,
 }
