@@ -30,7 +30,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           override: true
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v2.1.4
         with:
           path: |
             target
@@ -73,7 +73,7 @@ jobs:
           target: wasm32-unknown-unknown
           override: true
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v2.1.4
         with:
           path: |
             target
