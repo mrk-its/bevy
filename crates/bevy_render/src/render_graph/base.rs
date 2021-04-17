@@ -59,6 +59,7 @@ pub struct BaseRenderGraphConfig {
     pub add_3d_camera: bool,
     pub add_main_depth_texture: bool,
     pub add_main_pass: bool,
+    pub create_swap_chain: bool,
     pub connect_main_pass_to_swapchain: bool,
     pub connect_main_pass_to_main_depth_texture: bool,
 }
@@ -88,6 +89,7 @@ impl Default for BaseRenderGraphConfig {
             add_main_depth_texture: true,
             connect_main_pass_to_swapchain: true,
             connect_main_pass_to_main_depth_texture: true,
+            create_swap_chain: true,
         }
     }
 }
@@ -185,10 +187,12 @@ pub(crate) fn add_base_graph(config: &BaseRenderGraphConfig, world: &mut World) 
         }
     }
 
-    graph.add_node(
-        node::PRIMARY_SWAP_CHAIN,
-        WindowSwapChainNode::new(WindowId::primary()),
-    );
+    if config.create_swap_chain {
+        graph.add_node(
+            node::PRIMARY_SWAP_CHAIN,
+            WindowSwapChainNode::new(WindowId::primary()),
+        );
+    }
 
     if config.connect_main_pass_to_swapchain {
         graph

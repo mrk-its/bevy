@@ -44,6 +44,7 @@ use camera::{
     ActiveCameras, Camera, DepthCalculation, OrthographicProjection, PerspectiveProjection,
     RenderLayers, ScalingMode, VisibleEntities, WindowOrigin,
 };
+pub use image;
 use pipeline::{
     IndexFormat, PipelineCompiler, PipelineDescriptor, PipelineSpecialization, PrimitiveTopology,
     ShaderSpecialization, VertexBufferLayout,
